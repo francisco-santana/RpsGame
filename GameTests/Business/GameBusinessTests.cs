@@ -1,44 +1,61 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Game.Business;
+﻿using FluentAssertions;
+using Game.Dto;
+using GameTests.Fakes.Dto;
+using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections;
 
 namespace Game.Business.Tests
 {
-    [TestClass()]
+    [TestFixture]
     public class GameBusinessTests
     {
-        [TestMethod()]
-        public void GameBusinessTest()
+        public const string ERROR_MESSAGE_NUMBER_PLAYERS_INCORRECT = "WrongNumberOfPlayersError";
+        public const string ERROR_MESSAGE_NUMBER_GAMES_INCORRECT = "WrongNumberOfGamesError";
+        public const string ERROR_MESSAGE_STRATEGY_ERROR = "NoSuchStrategyError";
+
+        private IGameBusiness _gameBusiness;
+
+        private static IEnumerable TestCasesForExceptions
         {
-            Assert.Fail();
+            get
+            {
+                yield return new TestCaseData(
+                   TournamentDtoFake.GetTournamentWithWrongMove(),
+                   ERROR_MESSAGE_STRATEGY_ERROR
+                ).SetName("[GameBusiness] Should be return exception message for wrong choice of move");
+
+                yield return new TestCaseData(
+                   TournamentDtoFake.GetTournamentWithWrongNumberOfPlayers(),
+                   ERROR_MESSAGE_NUMBER_PLAYERS_INCORRECT
+                ).SetName("[GameBusiness] Should be return exception message for wrong number of players");
+
+                yield return new TestCaseData(
+                   TournamentDtoFake.GetTournamentWithWrongNumberOfGames(),
+                   ERROR_MESSAGE_NUMBER_GAMES_INCORRECT
+                ).SetName("[GameBusiness] Should be return exception message for wrong number of games");
+            }
+        }
+        
+        [SetUp]
+        public void SetUp()
+        {
+            _gameBusiness = new GameBusiness();
         }
 
-        [TestMethod()]
-        public void GameBusinessTest1()
+        [TestCase(TestName = "[GameBusiness] Should be return the winner of the tournament")]
+        public void Should_be_return_the_winner_tournament()
         {
-            Assert.Fail();
+            var tournament = TournamentDtoFake.GetValidTournament();
+            var obtained = _gameBusiness.RpsGameWinner(tournament);
+            obtained.Should().BeEquivalentTo(PlayerDtoFake.GetWinnerPlayer.OutPutNameMove);
         }
 
-        [TestMethod()]
-        public void RpsGameWinnerTest()
+        [TestCaseSource(nameof(TestCasesForExceptions))]
+        public void Should_be_return_exception(TournamentDto tournament, string expectedException)
         {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void GenerateNewTurnTest()
-        {
-            Assert.Fail();
-        }
-
-        [TestMethod()]
-        public void RunGameTest()
-        {
-            Assert.Fail();
+            var obtained = Assert.Throws<Exception>(() => _gameBusiness.RpsGameWinner(tournament));
+            obtained.Message.Should().Be(expectedException);
         }
     }
 }

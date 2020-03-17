@@ -4,5 +4,6 @@
     {
         public string Name { get; set; }
         public char Move { get; set; }
+        public string OutPutNameMove => $"['{Name}', '{Move}']";
     }
 }
